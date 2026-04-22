@@ -1,0 +1,215 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: "Geist";
+  src: url("https://cdn.jsdelivr.net/fontsource/fonts/geist-sans@latest/latin-400-normal.woff2")
+    format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Geist";
+  src: url("https://cdn.jsdelivr.net/fontsource/fonts/geist-sans@latest/latin-500-normal.woff2")
+    format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Geist";
+  src: url("https://cdn.jsdelivr.net/fontsource/fonts/geist-sans@latest/latin-600-normal.woff2")
+    format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Geist Mono";
+  src: url("https://cdn.jsdelivr.net/fontsource/fonts/geist-mono@latest/latin-400-normal.woff2")
+    format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Geist Mono";
+  src: url("https://cdn.jsdelivr.net/fontsource/fonts/geist-mono@latest/latin-500-normal.woff2")
+    format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@theme {
+  --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, monospace;
+
+  --color-surface-0: #09090b;
+  --color-surface-1: #111113;
+  --color-surface-2: #18181b;
+  --color-surface-3: #27272a;
+  --color-border: #27272a;
+  --color-border-subtle: #1e1e21;
+
+  --color-status-pending: #fbbf24;
+  --color-status-in-progress: #60a5fa;
+  --color-status-complete: #34d399;
+  --color-status-failed: #f87171;
+
+  --color-status-pending-dim: #78590a;
+  --color-status-in-progress-dim: #1e3a5f;
+  --color-status-complete-dim: #064e3b;
+  --color-status-failed-dim: #7f1d1d;
+}
+
+* {
+  border-color: var(--color-border);
+}
+
+body {
+  @apply bg-surface-0 text-zinc-100 font-sans antialiased;
+  margin: 0;
+}
+
+@utility scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-surface-3) transparent;
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(96, 165, 250, 0);
+  }
+  50% {
+    box-shadow: 0 0 8px 2px rgba(96, 165, 250, 0.15);
+  }
+}
+
+@utility animate-pulse-glow {
+  animation: pulse-glow 2.5s ease-in-out infinite;
+}
+
+@keyframes stagger-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@utility animate-stagger-in {
+  animation: stagger-in 0.3s ease-out backwards;
+}
+
+.markdown-body {
+  @apply text-zinc-300 leading-relaxed;
+
+  h1,
+  h2,
+  h3 {
+    @apply text-zinc-100 font-semibold mt-6 mb-3;
+  }
+  h1 {
+    @apply text-2xl;
+  }
+  h2 {
+    @apply text-xl;
+  }
+  h3 {
+    @apply text-lg;
+  }
+
+  p {
+    @apply mb-4;
+  }
+
+  ul,
+  ol {
+    @apply mb-4 pl-6;
+  }
+  ul {
+    @apply list-disc;
+  }
+  ol {
+    @apply list-decimal;
+  }
+  li {
+    @apply mb-1;
+  }
+
+  code {
+    @apply bg-surface-3 text-amber-300 px-1.5 py-0.5 rounded text-sm font-mono;
+  }
+  pre {
+    @apply bg-surface-2 border border-border rounded-lg p-4 mb-4 overflow-x-auto;
+  }
+  pre code {
+    @apply bg-transparent p-0 text-zinc-300;
+  }
+  pre code.hljs {
+    @apply bg-transparent p-0;
+  }
+  .hljs-doctag,
+  .hljs-keyword,
+  .hljs-meta .hljs-keyword,
+  .hljs-template-tag,
+  .hljs-template-variable,
+  .hljs-type,
+  .hljs-variable.language_ { color: #f47067; }
+  .hljs-title,
+  .hljs-title.class_,
+  .hljs-title.class_.inherited__,
+  .hljs-title.function_ { color: #dcbdfb; }
+  .hljs-attr,
+  .hljs-attribute,
+  .hljs-literal,
+  .hljs-meta,
+  .hljs-number,
+  .hljs-operator,
+  .hljs-variable,
+  .hljs-selector-attr,
+  .hljs-selector-class,
+  .hljs-selector-id { color: #6cb6ff; }
+  .hljs-regexp,
+  .hljs-string,
+  .hljs-meta .hljs-string { color: #96d0ff; }
+  .hljs-built_in,
+  .hljs-symbol { color: #f69d50; }
+  .hljs-comment,
+  .hljs-code,
+  .hljs-formula { color: #768390; }
+  .hljs-name,
+  .hljs-quote,
+  .hljs-selector-tag,
+  .hljs-selector-pseudo { color: #8ddb8c; }
+  .hljs-section { color: #316dca; font-weight: bold; }
+  .hljs-bullet { color: #eac55f; }
+  .hljs-emphasis { color: #adbac7; font-style: italic; }
+  .hljs-strong { color: #adbac7; font-weight: bold; }
+  .hljs-addition { color: #b4f1b4; background-color: #1b4721; }
+  .hljs-deletion { color: #ffd8d3; background-color: #78191b; }
+
+  a {
+    @apply text-blue-400 underline;
+  }
+
+  table {
+    @apply w-full mb-4 border-collapse;
+  }
+  th,
+  td {
+    @apply border border-border px-3 py-2 text-left;
+  }
+  th {
+    @apply bg-surface-2 font-medium text-zinc-200;
+  }
+
+  blockquote {
+    @apply border-l-2 border-zinc-600 pl-4 italic text-zinc-400 mb-4;
+  }
+}
