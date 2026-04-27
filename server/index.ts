@@ -1,8 +1,11 @@
 import { createApp } from "./app";
 import { db } from "./db/connection";
 import { projects } from "./db/schema";
+import { runMigrations } from "./db/migrate";
 import { loadProject } from "./services/scanner";
 import { watcherManager } from "./services/watcher";
+
+runMigrations();
 
 const app = createApp();
 const PORT = parseInt(process.env.PORT ?? "3001", 10);
