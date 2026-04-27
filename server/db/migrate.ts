@@ -2,7 +2,7 @@ import { Database } from "bun:sqlite";
 import { join } from "path";
 import { readdirSync, readFileSync } from "fs";
 
-const DB_PATH = join(import.meta.dir, "../../data/foundation.db");
+const DB_PATH = join(process.cwd(), "data/foundation.db");
 const MIGRATIONS_DIR = join(import.meta.dir, "migrations");
 
 const db = new Database(DB_PATH, { create: true });

@@ -20,7 +20,7 @@ export function createApp() {
   app.route("/api/projects", eventsRoute);
   app.route("/api/browse", browseRoute);
 
-  const distPath = join(import.meta.dir, "../client/dist");
+  const distPath = join(process.cwd(), "client/dist");
   if (existsSync(distPath)) {
     app.use("/*", serveStatic({ root: "./client/dist" }));
     app.get("*", serveStatic({ path: "./client/dist/index.html" }));

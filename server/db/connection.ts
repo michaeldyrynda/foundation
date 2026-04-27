@@ -3,7 +3,7 @@ import { drizzle } from "drizzle-orm/bun-sqlite";
 import * as schema from "./schema";
 import { join } from "path";
 
-const DB_PATH = join(import.meta.dir, "../../data/foundation.db");
+const DB_PATH = join(process.cwd(), "data/foundation.db");
 
 const sqlite = new Database(DB_PATH, { create: true });
 sqlite.exec("PRAGMA journal_mode = WAL;");
