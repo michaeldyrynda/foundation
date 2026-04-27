@@ -1,9 +1,11 @@
 import { Database } from "bun:sqlite";
 import { drizzle } from "drizzle-orm/bun-sqlite";
 import * as schema from "./schema";
-import { join } from "path";
+import { join, dirname } from "path";
+import { mkdirSync } from "fs";
 
 const DB_PATH = join(process.cwd(), "data/foundation.db");
+mkdirSync(dirname(DB_PATH), { recursive: true });
 
 const sqlite = new Database(DB_PATH, { create: true });
 sqlite.exec("PRAGMA journal_mode = WAL;");
