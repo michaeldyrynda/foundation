@@ -15,8 +15,14 @@ async function fetchJSON<T>(url: string, init?: RequestInit): Promise<T> {
 export const api = {
   projects: {
     list: () => fetchJSON<Project[]>("/projects"),
-    create: (path: string) =>
+    create: (path: string, planFile?: string) =>
       fetchJSON<Project>("/projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ path, planFile }),
+      }),
+    listPlans: (path: string) =>
+      fetchJSON<{ plans: string[] }>("/projects/plans", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ path }),

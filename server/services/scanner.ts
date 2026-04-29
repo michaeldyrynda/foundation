@@ -12,7 +12,7 @@ interface CachedProject {
 
 const cache = new Map<number, CachedProject>();
 
-export function loadProject(projectId: number, aiPath: string): void {
+export function loadProject(projectId: number, aiPath: string, planFile?: string | null): void {
   const tasksDir = join(aiPath, "tasks");
   const tasks = new Map<number, ParsedTask>();
 
@@ -31,10 +31,17 @@ export function loadProject(projectId: number, aiPath: string): void {
     }
   }
 
+  let planPath: string | null = null;
+  if (planFile) {
+    const pinned = join(aiPath, planFile);
+    if (existsSync(pinned)) planPath = pinned;
+  }
+  if (!planPath) planPath = findPlanFile(aiPath);
+
   cache.set(projectId, {
     aiPath,
     tasks,
-    planPath: findPlanFile(aiPath),
+    planPath,
     learningsPath: existsSync(join(aiPath, "learnings.md"))
       ? join(aiPath, "learnings.md")
       : null,
@@ -67,17 +74,23 @@ export function evictProject(projectId: number): void {
   cache.delete(projectId);
 }
 
-function findPlanFile(aiPath: string): string | null {
+export function listPlanFiles(aiPath: string): string[] {
+  const plans: string[] = [];
   const plansDir = join(aiPath, "plans");
   if (existsSync(plansDir)) {
-    const planFiles = readdirSync(plansDir).filter((f) => f.endsWith(".md"));
-    if (planFiles.length >= 1) return join(plansDir, planFiles[0]);
+    for (const f of readdirSync(plansDir).filter((f) => f.endsWith(".md")).sort()) {
+      plans.push(`plans/${f}`);
+    }
   }
-
-  const rootMds = readdirSync(aiPath).filter(
+  for (const f of readdirSync(aiPath).filter(
     (f) => f.endsWith(".md") && f !== "learnings.md"
-  );
-  if (rootMds.length === 1) return join(aiPath, rootMds[0]);
+  ).sort()) {
+    plans.push(f);
+  }
+  return plans;
+}
 
-  return null;
+function findPlanFile(aiPath: string): string | null {
+  const plans = listPlanFiles(aiPath);
+  return plans.length > 0 ? join(aiPath, plans[0]) : null;
 }

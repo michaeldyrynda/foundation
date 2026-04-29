@@ -5,6 +5,7 @@ export const projects = sqliteTable("projects", {
   name: text("name").notNull(),
   path: text("path").notNull().unique(),
   aiPath: text("ai_path").notNull(),
+  planFile: text("plan_file"),
   createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
   updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
 });

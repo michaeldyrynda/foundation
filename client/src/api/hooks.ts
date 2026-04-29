@@ -13,7 +13,8 @@ export function useProjects() {
 export function useAddProject() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (path: string) => api.projects.create(path),
+    mutationFn: ({ path, planFile }: { path: string; planFile?: string }) =>
+      api.projects.create(path, planFile),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["projects"] }),
   });
 }
@@ -47,7 +48,7 @@ export function usePlan(projectId: number | null) {
     queryKey: ["plan", projectId],
     queryFn: () => api.plan(projectId!),
     enabled: projectId !== null,
-    retry: false,
+    retry: 1,
   });
 }
 

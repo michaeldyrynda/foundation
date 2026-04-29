@@ -12,7 +12,7 @@ const PORT = parseInt(process.env.PORT ?? "3001", 10);
 
 const allProjects = db.select().from(projects).all();
 for (const project of allProjects) {
-  loadProject(project.id, project.aiPath);
+  loadProject(project.id, project.aiPath, project.planFile);
   watcherManager.watch(project.id, project.aiPath);
   console.log(`Watching: ${project.name} (${project.aiPath})`);
 }

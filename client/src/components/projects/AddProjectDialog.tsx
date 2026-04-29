@@ -2,33 +2,42 @@ import { useState, useEffect } from "react";
 import { useAddProject } from "../../api/hooks";
 import { api, type BrowseEntry } from "../../api/client";
 
+type Step = "path" | "browse" | "plan";
+
 interface Props {
   open: boolean;
   onClose: () => void;
-  onAdded: (projectId: number) => void;
+  onAdded: (project: import("../../types").Project) => void;
 }
 
 export function AddProjectDialog({ open, onClose, onAdded }: Props) {
+  const [step, setStep] = useState<Step>("path");
   const [path, setPath] = useState("");
-  const [browsing, setBrowsing] = useState(false);
+  const [plans, setPlans] = useState<string[]>([]);
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [plansLoading, setPlansLoading] = useState(false);
+
   const [browseDir, setBrowseDir] = useState<string | undefined>(undefined);
   const [browseCurrent, setBrowseCurrent] = useState("");
   const [browseParent, setBrowseParent] = useState<string | null>(null);
   const [entries, setEntries] = useState<BrowseEntry[]>([]);
   const [browseCurrentHasAi, setBrowseCurrentHasAi] = useState(false);
   const [browseLoading, setBrowseLoading] = useState(false);
+
   const addProject = useAddProject();
 
   useEffect(() => {
     if (!open) {
-      setBrowsing(false);
+      setStep("path");
       setPath("");
+      setPlans([]);
+      setSelectedPlan(null);
       addProject.reset();
     }
   }, [open]);
 
   useEffect(() => {
-    if (!browsing) return;
+    if (step !== "browse") return;
     setBrowseLoading(true);
     api.browse(browseDir).then((result) => {
       setBrowseCurrent(result.current);
@@ -37,23 +46,43 @@ export function AddProjectDialog({ open, onClose, onAdded }: Props) {
       setEntries(result.entries);
       setBrowseLoading(false);
     });
-  }, [browsing, browseDir]);
+  }, [step, browseDir]);
 
   if (!open) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    addProject.mutate(path.trim(), {
+  const fetchPlansAndProceed = (projectPath: string) => {
+    setPlansLoading(true);
+    api.projects.listPlans(projectPath).then(({ plans }) => {
+      setPlansLoading(false);
+      if (plans.length > 1) {
+        setPlans(plans);
+        setSelectedPlan(plans[0]);
+        setStep("plan");
+      } else {
+        submitProject(projectPath, plans.length === 1 ? plans[0] : undefined);
+      }
+    }).catch(() => {
+      setPlansLoading(false);
+      submitProject(projectPath);
+    });
+  };
+
+  const submitProject = (projectPath: string, planFile?: string) => {
+    addProject.mutate({ path: projectPath, planFile }, {
       onSuccess: (project) => {
-        setPath("");
-        onAdded(project.id);
+        onAdded(project);
         onClose();
       },
     });
   };
 
-  const selectEntry = (entry: BrowseEntry) => {
-    setBrowseDir(entry.path);
+  const handlePathSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    fetchPlansAndProceed(path.trim());
+  };
+
+  const handlePlanSubmit = () => {
+    submitProject(path.trim(), selectedPlan ?? undefined);
   };
 
   return (
@@ -68,15 +97,91 @@ export function AddProjectDialog({ open, onClose, onAdded }: Props) {
             Add Project
           </h2>
           <p className="text-sm text-zinc-500 mb-5">
-            Pick a directory containing a{" "}
-            <code className="text-xs bg-surface-3 px-1.5 py-0.5 rounded font-mono text-amber-300">
-              .ai/
-            </code>{" "}
-            folder, or type the path directly.
+            {step === "plan"
+              ? "Multiple plan documents found. Select the one to use."
+              : <>
+                  Pick a directory containing a{" "}
+                  <code className="text-xs bg-surface-3 px-1.5 py-0.5 rounded font-mono text-amber-300">
+                    .ai/
+                  </code>{" "}
+                  folder, or type the path directly.
+                </>
+            }
           </p>
         </div>
 
-        {browsing ? (
+        {step === "plan" ? (
+          <div className="flex flex-col min-h-0 flex-1">
+            <div className="px-6 pb-3">
+              <div className="bg-surface-0 border border-border rounded-lg px-3 py-2 text-xs font-mono text-zinc-400 truncate">
+                {path}
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto scrollbar-thin border-t border-border">
+              <div className="py-1">
+                {plans.map((plan) => (
+                  <button
+                    key={plan}
+                    onClick={() => setSelectedPlan(plan)}
+                    className={`w-full flex items-center gap-3 px-6 py-2.5 text-left transition-colors group ${
+                      selectedPlan === plan
+                        ? "bg-surface-2"
+                        : "hover:bg-surface-2"
+                    }`}
+                  >
+                    <div className={`shrink-0 w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                      selectedPlan === plan
+                        ? "border-zinc-100"
+                        : "border-zinc-600"
+                    }`}>
+                      {selectedPlan === plan && (
+                        <div className="w-2 h-2 rounded-full bg-zinc-100" />
+                      )}
+                    </div>
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 16 16"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="shrink-0 text-zinc-500"
+                    >
+                      <path d="M4 2h5.172a2 2 0 011.414.586l2.828 2.828A2 2 0 0114 6.828V13a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z" />
+                    </svg>
+                    <span className={`text-sm font-mono flex-1 truncate ${
+                      selectedPlan === plan
+                        ? "text-zinc-100"
+                        : "text-zinc-400 group-hover:text-zinc-200"
+                    }`}>
+                      {plan}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="px-6 py-4 border-t border-border flex gap-3 justify-end">
+              <button
+                type="button"
+                onClick={() => { setStep("path"); setPlans([]); }}
+                className="px-4 py-2 text-sm text-zinc-400 hover:text-zinc-200 transition-colors rounded-lg hover:bg-surface-3"
+              >
+                Back
+              </button>
+              <button
+                onClick={handlePlanSubmit}
+                disabled={!selectedPlan || addProject.isPending}
+                className="px-4 py-2 text-sm bg-zinc-100 text-zinc-900 rounded-lg font-medium hover:bg-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {addProject.isPending ? "Adding..." : "Add Project"}
+              </button>
+            </div>
+          </div>
+        ) : step === "browse" ? (
           <div className="flex flex-col min-h-0 flex-1">
             <div className="px-6 pb-3 flex items-center gap-2">
               {browseParent && (
@@ -102,7 +207,7 @@ export function AddProjectDialog({ open, onClose, onAdded }: Props) {
                 {browseCurrent}
               </div>
               <button
-                onClick={() => setBrowsing(false)}
+                onClick={() => setStep("path")}
                 className="shrink-0 text-xs text-zinc-500 hover:text-zinc-300 px-2 py-1 rounded transition-colors"
               >
                 Cancel
@@ -114,7 +219,8 @@ export function AddProjectDialog({ open, onClose, onAdded }: Props) {
                 <button
                   onClick={() => {
                     setPath(browseCurrent);
-                    setBrowsing(false);
+                    setStep("path");
+                    fetchPlansAndProceed(browseCurrent);
                   }}
                   className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-status-complete-dim text-status-complete text-sm font-medium rounded-lg hover:bg-status-complete/20 transition-colors"
                 >
@@ -149,7 +255,7 @@ export function AddProjectDialog({ open, onClose, onAdded }: Props) {
                   {entries.map((entry) => (
                     <button
                       key={entry.path}
-                      onClick={() => selectEntry(entry)}
+                      onClick={() => setBrowseDir(entry.path)}
                       className="w-full flex items-center gap-3 px-6 py-2.5 text-left hover:bg-surface-2 transition-colors group"
                     >
                       <svg
@@ -201,7 +307,7 @@ export function AddProjectDialog({ open, onClose, onAdded }: Props) {
           </div>
         ) : (
           <div className="px-6 pb-6">
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handlePathSubmit}>
               <div className="flex gap-2">
                 <input
                   type="text"
@@ -213,7 +319,7 @@ export function AddProjectDialog({ open, onClose, onAdded }: Props) {
                 />
                 <button
                   type="button"
-                  onClick={() => setBrowsing(true)}
+                  onClick={() => setStep("browse")}
                   className="shrink-0 px-3 py-3 bg-surface-0 border border-border rounded-lg text-zinc-400 hover:text-zinc-200 hover:border-zinc-500 transition-colors"
                   title="Browse directories"
                 >
@@ -246,10 +352,10 @@ export function AddProjectDialog({ open, onClose, onAdded }: Props) {
                 </button>
                 <button
                   type="submit"
-                  disabled={!path.trim() || addProject.isPending}
+                  disabled={!path.trim() || addProject.isPending || plansLoading}
                   className="px-4 py-2 text-sm bg-zinc-100 text-zinc-900 rounded-lg font-medium hover:bg-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  {addProject.isPending ? "Adding..." : "Add Project"}
+                  {plansLoading ? "Checking..." : addProject.isPending ? "Adding..." : "Add Project"}
                 </button>
               </div>
             </form>

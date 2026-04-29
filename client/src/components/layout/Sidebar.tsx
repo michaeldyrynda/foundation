@@ -149,10 +149,7 @@ export function Sidebar({ selectedId, onSelect, collapsed, onToggle }: Props) {
       <AddProjectDialog
         open={dialogOpen}
         onClose={() => setDialogOpen(false)}
-        onAdded={(id) => {
-          const project = projects?.find((p) => p.id === id);
-          if (project) onSelect(project);
-        }}
+        onAdded={(project) => onSelect(project)}
       />
     </>
   );

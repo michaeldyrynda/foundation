@@ -15,6 +15,7 @@ export interface Project {
   name: string;
   path: string;
   aiPath: string;
+  planFile: string | null;
   createdAt: string;
   updatedAt: string;
 }

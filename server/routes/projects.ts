@@ -4,7 +4,7 @@ import { existsSync } from "fs";
 import { basename, join, resolve } from "path";
 import { db } from "../db/connection";
 import { projects } from "../db/schema";
-import { loadProject, evictProject } from "../services/scanner";
+import { loadProject, evictProject, listPlanFiles } from "../services/scanner";
 import { watcherManager } from "../services/watcher";
 
 const app = new Hono();
@@ -14,25 +14,35 @@ app.get("/", (c) => {
   return c.json(all);
 });
 
-app.post("/", async (c) => {
+app.post("/plans", async (c) => {
   const body = await c.req.json<{ path: string }>();
+  const aiPath = join(resolve(body.path), ".ai");
+  if (!existsSync(aiPath)) {
+    return c.json({ error: ".ai/ directory not found" }, 400);
+  }
+  return c.json({ plans: listPlanFiles(aiPath) });
+});
+
+app.post("/", async (c) => {
+  const body = await c.req.json<{ path: string; planFile?: string }>();
   const projectPath = resolve(body.path);
 
-  let aiPath = join(projectPath, ".ai");
+  const aiPath = join(projectPath, ".ai");
   if (!existsSync(aiPath)) {
     return c.json({ error: ".ai/ directory not found at the given path" }, 400);
   }
 
   const name = basename(projectPath);
   const now = new Date();
+  const planFile = body.planFile || null;
 
   const [project] = db
     .insert(projects)
-    .values({ name, path: projectPath, aiPath, createdAt: now, updatedAt: now })
+    .values({ name, path: projectPath, aiPath, planFile, createdAt: now, updatedAt: now })
     .returning()
     .all();
 
-  loadProject(project.id, project.aiPath);
+  loadProject(project.id, project.aiPath, project.planFile);
   watcherManager.watch(project.id, project.aiPath);
 
   return c.json(project, 201);
