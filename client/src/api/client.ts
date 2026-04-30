@@ -29,6 +29,14 @@ export const api = {
       }),
     remove: (id: number) =>
       fetchJSON<void>(`/projects/${id}`, { method: "DELETE" }),
+    listPlansById: (id: number) =>
+      fetchJSON<{ plans: string[] }>(`/projects/${id}/plans`),
+    updatePlanFile: (id: number, planFile: string | null) =>
+      fetchJSON<Project>(`/projects/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ planFile }),
+      }),
   },
   tasks: {
     list: (projectId: number) =>

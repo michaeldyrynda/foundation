@@ -19,7 +19,7 @@ const queryClient = new QueryClient({
   },
 });
 
-function ProjectView({ project }: { project: Project }) {
+function ProjectView({ project, onProjectUpdated }: { project: Project; onProjectUpdated: (p: Project) => void }) {
   const [activeTab, setActiveTab] = useState<ViewTab>("board");
   const { data: tasks = [] } = useTasks(project.id);
 
@@ -31,6 +31,7 @@ function ProjectView({ project }: { project: Project }) {
         project={project}
         activeTab={activeTab}
         onTabChange={setActiveTab}
+        onProjectUpdated={onProjectUpdated}
       />
       <main className="flex-1 overflow-hidden">
         {activeTab === "board" && <KanbanBoard tasks={tasks} />}
@@ -58,7 +59,7 @@ function AppContent() {
         onToggle={() => setSidebarCollapsed((c) => !c)}
       />
       {selectedProject ? (
-        <ProjectView key={selectedProject.id} project={selectedProject} />
+        <ProjectView key={selectedProject.id} project={selectedProject} onProjectUpdated={setSelectedProject} />
       ) : (
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">

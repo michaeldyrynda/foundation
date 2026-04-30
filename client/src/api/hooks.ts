@@ -27,6 +27,27 @@ export function useRemoveProject() {
   });
 }
 
+export function useProjectPlans(projectId: number | null) {
+  return useQuery({
+    queryKey: ["projectPlans", projectId],
+    queryFn: () => api.projects.listPlansById(projectId!),
+    enabled: projectId !== null,
+  });
+}
+
+export function useUpdatePlanFile() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, planFile }: { id: number; planFile: string | null }) =>
+      api.projects.updatePlanFile(id, planFile),
+    onSuccess: (_, { id }) => {
+      qc.invalidateQueries({ queryKey: ["projects"] });
+      qc.invalidateQueries({ queryKey: ["plan", id] });
+      qc.invalidateQueries({ queryKey: ["projectPlans", id] });
+    },
+  });
+}
+
 export function useTasks(projectId: number | null) {
   return useQuery({
     queryKey: ["tasks", projectId],

@@ -48,6 +48,32 @@ app.post("/", async (c) => {
   return c.json(project, 201);
 });
 
+app.get("/:id/plans", (c) => {
+  const id = parseInt(c.req.param("id"), 10);
+  const [project] = db.select().from(projects).where(eq(projects.id, id)).all();
+  if (!project) return c.json({ error: "Project not found" }, 404);
+  return c.json({ plans: listPlanFiles(project.aiPath) });
+});
+
+app.patch("/:id", async (c) => {
+  const id = parseInt(c.req.param("id"), 10);
+  const [project] = db.select().from(projects).where(eq(projects.id, id)).all();
+  if (!project) return c.json({ error: "Project not found" }, 404);
+
+  const body = await c.req.json<{ planFile: string | null }>();
+  const planFile = body.planFile || null;
+
+  db.update(projects)
+    .set({ planFile, updatedAt: new Date() })
+    .where(eq(projects.id, id))
+    .run();
+
+  loadProject(id, project.aiPath, planFile);
+
+  const [updated] = db.select().from(projects).where(eq(projects.id, id)).all();
+  return c.json(updated);
+});
+
 app.delete("/:id", (c) => {
   const id = parseInt(c.req.param("id"), 10);
   watcherManager.unwatch(id);
