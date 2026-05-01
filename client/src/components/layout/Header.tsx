@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useProjectPlans, useUpdatePlanFile } from "../../api/hooks";
 import type { Project } from "../../types";
 
@@ -21,7 +21,9 @@ const TABS: { key: ViewTab; label: string }[] = [
 
 function PlanSwitcher({ project, onProjectUpdated }: { project: Project; onProjectUpdated?: (p: Project) => void }) {
   const [open, setOpen] = useState(false);
+  const [filter, setFilter] = useState("");
   const menuRef = useRef<HTMLDivElement>(null);
+  const filterRef = useRef<HTMLInputElement>(null);
   const { data: plansData } = useProjectPlans(project.id);
   const updatePlanFile = useUpdatePlanFile();
 
@@ -36,7 +38,25 @@ function PlanSwitcher({ project, onProjectUpdated }: { project: Project; onProje
     return () => document.removeEventListener("mousedown", handleClick);
   }, [open]);
 
+  useEffect(() => {
+    if (!open) {
+      setFilter("");
+      return;
+    }
+
+    requestAnimationFrame(() => filterRef.current?.focus());
+  }, [open]);
+
   const plans = plansData?.plans ?? [];
+  const normalizedFilter = filter.trim().toLowerCase();
+  const filteredPlans = useMemo(
+    () =>
+      normalizedFilter
+        ? plans.filter((plan) => plan.toLowerCase().includes(normalizedFilter))
+        : plans,
+    [normalizedFilter, plans]
+  );
+
   if (plans.length <= 1 && !project.planFile) return null;
 
   const label = project.planFile ?? plans[0] ?? "plan";
@@ -55,7 +75,7 @@ function PlanSwitcher({ project, onProjectUpdated }: { project: Project; onProje
     <div className="relative" ref={menuRef}>
       <button
         onClick={() => canSwitch && setOpen(!open)}
-        className={`flex items-center gap-1.5 text-xs font-mono px-2 py-1 rounded-md bg-surface-2 transition-colors ${
+        className={`flex max-w-[42rem] items-center gap-1.5 rounded-md bg-surface-2 px-2 py-1 text-xs font-mono transition-colors ${
           canSwitch
             ? "text-zinc-400 hover:text-zinc-200 cursor-pointer"
             : "text-zinc-500 cursor-default"
@@ -74,7 +94,7 @@ function PlanSwitcher({ project, onProjectUpdated }: { project: Project; onProje
         >
           <path d="M4 2h5.172a2 2 0 011.414.586l2.828 2.828A2 2 0 0114 6.828V13a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z" />
         </svg>
-        {label}
+        <span className="min-w-0 truncate">{label}</span>
         {canSwitch && (
           <svg
             width="10"
@@ -92,37 +112,55 @@ function PlanSwitcher({ project, onProjectUpdated }: { project: Project; onProje
         )}
       </button>
       {open && (
-        <div className="absolute top-full left-0 mt-1 bg-surface-1 border border-border rounded-lg shadow-xl z-50 min-w-[200px] py-1">
-          {plans.map((plan) => (
-            <button
-              key={plan}
-              onClick={() => handleSelect(plan)}
-              className={`w-full text-left px-3 py-2 text-sm font-mono transition-colors flex items-center gap-2 ${
-                plan === project.planFile
-                  ? "text-zinc-100 bg-surface-2"
-                  : "text-zinc-400 hover:text-zinc-200 hover:bg-surface-2/50"
-              }`}
-            >
-              {plan === project.planFile ? (
-                <svg
-                  width="12"
-                  height="12"
-                  viewBox="0 0 12 12"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="shrink-0"
+        <div className="absolute left-0 top-full z-50 mt-1 w-[min(42rem,calc(100vw-2rem))] rounded-lg border border-border bg-surface-1 shadow-xl">
+          <div className="border-b border-border-subtle p-2">
+            <input
+              ref={filterRef}
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              placeholder="Filter specs..."
+              className="w-full rounded-md border border-border bg-surface-0 px-2.5 py-1.5 text-xs font-mono text-zinc-200 outline-none transition-colors placeholder:text-zinc-600 focus:border-zinc-600"
+            />
+          </div>
+          <div className="max-h-[min(28rem,calc(100vh-9rem))] overflow-y-auto py-1 scrollbar-thin">
+            {filteredPlans.length > 0 ? (
+              filteredPlans.map((plan) => (
+                <button
+                  key={plan}
+                  onClick={() => handleSelect(plan)}
+                  title={plan}
+                  className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-mono transition-colors ${
+                    plan === project.planFile
+                      ? "bg-surface-2 text-zinc-100"
+                      : "text-zinc-400 hover:bg-surface-2/50 hover:text-zinc-200"
+                  }`}
                 >
-                  <path d="M10 3L4.5 8.5 2 6" />
-                </svg>
-              ) : (
-                <span className="w-3 shrink-0" />
-              )}
-              {plan}
-            </button>
-          ))}
+                  {plan === project.planFile ? (
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 12 12"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="shrink-0"
+                    >
+                      <path d="M10 3L4.5 8.5 2 6" />
+                    </svg>
+                  ) : (
+                    <span className="w-3 shrink-0" />
+                  )}
+                  <span className="min-w-0 truncate">{plan}</span>
+                </button>
+              ))
+            ) : (
+              <div className="px-3 py-6 text-center text-xs font-mono text-zinc-600">
+                No matching specs
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
