@@ -31,6 +31,24 @@ bun run db:generate    # Generate new migration from schema changes
   - `src/lib/` — Status config, utilities
 - `data/` — SQLite database file (foundation.db)
 
+## Plan directory structure
+
+Each plan is a slug-named directory under `.ai/plans/` containing its spec, tasks, and learnings co-located:
+
+```
+.ai/
+└── plans/
+    └── {slug}/
+        ├── spec.md          # The plan/spec document
+        ├── learnings.md     # Accumulated learnings from task implementation
+        └── tasks/
+            ├── 001.md
+            ├── 002.md
+            └── ...
+```
+
+Switching plans in the UI switches all three views (board/tasks, plan, learnings) to the selected plan's directory. The `planFile` column in the DB stores the slug (e.g. `refactor-auth`), not a file path.
+
 ## Key patterns
 
 - Filesystem is the source of truth for task data. SQLite only stores project metadata (which directories to watch).

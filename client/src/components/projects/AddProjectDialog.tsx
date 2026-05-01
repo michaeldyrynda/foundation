@@ -157,7 +157,7 @@ export function AddProjectDialog({ open, onClose, onAdded }: Props) {
                         ? "text-zinc-100"
                         : "text-zinc-400 group-hover:text-zinc-200"
                     }`}>
-                      {plan}
+                      {plan.replace(/-/g, " ")}
                     </span>
                   </button>
                 ))}

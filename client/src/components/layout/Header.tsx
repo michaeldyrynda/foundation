@@ -59,7 +59,8 @@ function PlanSwitcher({ project, onProjectUpdated }: { project: Project; onProje
 
   if (plans.length <= 1 && !project.planFile) return null;
 
-  const label = project.planFile ?? plans[0] ?? "plan";
+  const slug = project.planFile ?? plans[0] ?? "plan";
+  const label = slug.replace(/-/g, " ");
   const canSwitch = plans.length > 1;
 
   const handleSelect = (planFile: string) => {
@@ -152,7 +153,7 @@ function PlanSwitcher({ project, onProjectUpdated }: { project: Project; onProje
                   ) : (
                     <span className="w-3 shrink-0" />
                   )}
-                  <span className="min-w-0 truncate">{plan}</span>
+                  <span className="min-w-0 truncate">{plan.replace(/-/g, " ")}</span>
                 </button>
               ))
             ) : (

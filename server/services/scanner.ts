@@ -1,10 +1,11 @@
-import { readdirSync, existsSync } from "fs";
+import { readdirSync, existsSync, statSync } from "fs";
 import { join } from "path";
 import { parseTaskFile } from "./parser";
 import type { ProjectSnapshot, ParsedTask } from "../types";
 
 interface CachedProject {
   aiPath: string;
+  activePlan: string | null;
   tasks: Map<number, ParsedTask>;
   planPath: string | null;
   learningsPath: string | null;
@@ -12,39 +13,48 @@ interface CachedProject {
 
 const cache = new Map<number, CachedProject>();
 
+function planDir(aiPath: string, slug: string): string {
+  return join(aiPath, "plans", slug);
+}
+
 export function loadProject(projectId: number, aiPath: string, planFile?: string | null): void {
-  const tasksDir = join(aiPath, "tasks");
+  const activePlan = planFile || discoverFirstPlan(aiPath);
   const tasks = new Map<number, ParsedTask>();
 
-  if (existsSync(tasksDir)) {
-    const files = readdirSync(tasksDir)
-      .filter((f) => f.endsWith(".md"))
-      .sort();
+  let planPath: string | null = null;
+  let learningsPath: string | null = null;
 
-    for (const file of files) {
-      try {
-        const task = parseTaskFile(join(tasksDir, file));
-        tasks.set(task.number, task);
-      } catch {
-        // skip malformed files
+  if (activePlan) {
+    const dir = planDir(aiPath, activePlan);
+    const specPath = join(dir, "spec.md");
+    if (existsSync(specPath)) planPath = specPath;
+
+    const lPath = join(dir, "learnings.md");
+    if (existsSync(lPath)) learningsPath = lPath;
+
+    const tasksDir = join(dir, "tasks");
+    if (existsSync(tasksDir)) {
+      const files = readdirSync(tasksDir)
+        .filter((f) => f.endsWith(".md"))
+        .sort();
+
+      for (const file of files) {
+        try {
+          const task = parseTaskFile(join(tasksDir, file));
+          tasks.set(task.number, task);
+        } catch {
+          // skip malformed files
+        }
       }
     }
   }
 
-  let planPath: string | null = null;
-  if (planFile) {
-    const pinned = join(aiPath, planFile);
-    if (existsSync(pinned)) planPath = pinned;
-  }
-  if (!planPath) planPath = findPlanFile(aiPath);
-
   cache.set(projectId, {
     aiPath,
+    activePlan,
     tasks,
     planPath,
-    learningsPath: existsSync(join(aiPath, "learnings.md"))
-      ? join(aiPath, "learnings.md")
-      : null,
+    learningsPath,
   });
 }
 
@@ -58,6 +68,10 @@ export function getSnapshot(projectId: number): ProjectSnapshot | null {
     planPath: cached.planPath,
     learningsPath: cached.learningsPath,
   };
+}
+
+export function getActivePlan(projectId: number): string | null {
+  return cache.get(projectId)?.activePlan ?? null;
 }
 
 export function updateTask(projectId: number, task: ParsedTask): void {
@@ -74,23 +88,19 @@ export function evictProject(projectId: number): void {
   cache.delete(projectId);
 }
 
-export function listPlanFiles(aiPath: string): string[] {
-  const plans: string[] = [];
+export function listPlanSlugs(aiPath: string): string[] {
   const plansDir = join(aiPath, "plans");
-  if (existsSync(plansDir)) {
-    for (const f of readdirSync(plansDir).filter((f) => f.endsWith(".md")).sort()) {
-      plans.push(`plans/${f}`);
-    }
-  }
-  for (const f of readdirSync(aiPath).filter(
-    (f) => f.endsWith(".md") && f !== "learnings.md"
-  ).sort()) {
-    plans.push(f);
-  }
-  return plans;
+  if (!existsSync(plansDir)) return [];
+
+  return readdirSync(plansDir)
+    .filter((entry) => {
+      const fullPath = join(plansDir, entry);
+      return statSync(fullPath).isDirectory() && existsSync(join(fullPath, "spec.md"));
+    })
+    .sort();
 }
 
-function findPlanFile(aiPath: string): string | null {
-  const plans = listPlanFiles(aiPath);
-  return plans.length > 0 ? join(aiPath, plans[0]) : null;
+function discoverFirstPlan(aiPath: string): string | null {
+  const slugs = listPlanSlugs(aiPath);
+  return slugs[0] ?? null;
 }

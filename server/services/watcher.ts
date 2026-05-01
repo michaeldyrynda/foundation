@@ -1,7 +1,7 @@
 import chokidar from "chokidar";
 import { basename, relative } from "path";
 import { parseTaskFile } from "./parser";
-import { updateTask, removeTask } from "./scanner";
+import { updateTask, removeTask, getActivePlan } from "./scanner";
 import type { SSEEvent } from "../types";
 
 type Subscriber = (event: SSEEvent) => void;
@@ -21,7 +21,7 @@ class WatcherManager {
     const subscribers = new Set<Subscriber>();
     const watcher = chokidar.watch(aiPath, {
       ignoreInitial: true,
-      depth: 2,
+      depth: 4,
     });
 
     const broadcast = (event: SSEEvent) => {
@@ -46,10 +46,23 @@ class WatcherManager {
       );
     };
 
+    const isActivePlanPath = (rel: string): boolean => {
+      const activePlan = getActivePlan(projectId);
+      if (!activePlan) return false;
+      return rel.startsWith(`plans/${activePlan}/`);
+    };
+
+    const activeTasksPrefix = (): string | null => {
+      const activePlan = getActivePlan(projectId);
+      if (!activePlan) return null;
+      return `plans/${activePlan}/tasks/`;
+    };
+
     watcher.on("change", (filePath) => {
       const rel = relative(aiPath, filePath);
+      const tasksPrefix = activeTasksPrefix();
 
-      if (rel.startsWith("tasks/") && rel.endsWith(".md")) {
+      if (tasksPrefix && rel.startsWith(tasksPrefix) && rel.endsWith(".md")) {
         debouncedBroadcast(`change:${filePath}`, () => {
           try {
             const task = parseTaskFile(filePath);
@@ -59,11 +72,11 @@ class WatcherManager {
             // ignore parse errors on partial writes
           }
         });
-      } else if (rel === "learnings.md") {
+      } else if (isActivePlanPath(rel) && rel.endsWith("learnings.md")) {
         debouncedBroadcast("learnings", () => {
           broadcast({ type: "learnings:updated", data: {} });
         });
-      } else if (rel.startsWith("plans/") && rel.endsWith(".md")) {
+      } else if (isActivePlanPath(rel) && rel.endsWith("spec.md")) {
         debouncedBroadcast("plan", () => {
           broadcast({ type: "plan:updated", data: {} });
         });
@@ -72,7 +85,9 @@ class WatcherManager {
 
     watcher.on("add", (filePath) => {
       const rel = relative(aiPath, filePath);
-      if (rel.startsWith("tasks/") && rel.endsWith(".md")) {
+      const tasksPrefix = activeTasksPrefix();
+
+      if (tasksPrefix && rel.startsWith(tasksPrefix) && rel.endsWith(".md")) {
         debouncedBroadcast(`add:${filePath}`, () => {
           try {
             const task = parseTaskFile(filePath);
@@ -87,7 +102,9 @@ class WatcherManager {
 
     watcher.on("unlink", (filePath) => {
       const rel = relative(aiPath, filePath);
-      if (rel.startsWith("tasks/") && rel.endsWith(".md")) {
+      const tasksPrefix = activeTasksPrefix();
+
+      if (tasksPrefix && rel.startsWith(tasksPrefix) && rel.endsWith(".md")) {
         const num = parseInt(basename(filePath, ".md"), 10);
         if (!isNaN(num)) {
           removeTask(projectId, num);

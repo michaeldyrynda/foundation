@@ -4,7 +4,7 @@ import { existsSync } from "fs";
 import { basename, join, resolve } from "path";
 import { db } from "../db/connection";
 import { projects } from "../db/schema";
-import { loadProject, evictProject, listPlanFiles } from "../services/scanner";
+import { loadProject, evictProject, listPlanSlugs } from "../services/scanner";
 import { watcherManager } from "../services/watcher";
 
 const app = new Hono();
@@ -20,7 +20,7 @@ app.post("/plans", async (c) => {
   if (!existsSync(aiPath)) {
     return c.json({ error: ".ai/ directory not found" }, 400);
   }
-  return c.json({ plans: listPlanFiles(aiPath) });
+  return c.json({ plans: listPlanSlugs(aiPath) });
 });
 
 app.post("/", async (c) => {
@@ -52,7 +52,7 @@ app.get("/:id/plans", (c) => {
   const id = parseInt(c.req.param("id"), 10);
   const [project] = db.select().from(projects).where(eq(projects.id, id)).all();
   if (!project) return c.json({ error: "Project not found" }, 404);
-  return c.json({ plans: listPlanFiles(project.aiPath) });
+  return c.json({ plans: listPlanSlugs(project.aiPath) });
 });
 
 app.patch("/:id", async (c) => {

@@ -143,7 +143,7 @@ body {
   }
 
   code {
-    @apply bg-surface-3 text-amber-300 px-1.5 py-0.5 rounded text-sm font-mono;
+    @apply bg-surface-3 text-amber-300 px-1.5 py-0.5 rounded text-sm font-mono break-all;
   }
   pre {
     @apply bg-surface-2 border border-border rounded-lg p-4 mb-4 overflow-x-auto;
@@ -199,7 +199,7 @@ body {
   }
 
   table {
-    @apply w-full mb-4 border-collapse;
+    @apply w-full mb-4 border-collapse block overflow-x-auto;
   }
   th,
   td {

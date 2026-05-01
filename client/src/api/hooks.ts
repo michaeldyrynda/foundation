@@ -43,6 +43,9 @@ export function useUpdatePlanFile() {
     onSuccess: (_, { id }) => {
       qc.invalidateQueries({ queryKey: ["projects"] });
       qc.invalidateQueries({ queryKey: ["plan", id] });
+      qc.invalidateQueries({ queryKey: ["learnings", id] });
+      qc.invalidateQueries({ queryKey: ["tasks", id] });
+      qc.invalidateQueries({ queryKey: ["stats", id] });
       qc.invalidateQueries({ queryKey: ["projectPlans", id] });
     },
   });
