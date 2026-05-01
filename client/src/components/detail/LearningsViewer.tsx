@@ -1,4 +1,5 @@
 import { useLearnings } from "../../api/hooks";
+import { MarkdownDocumentView } from "./MarkdownDocumentView";
 
 interface Props {
   projectId: number;
@@ -35,14 +36,5 @@ export function LearningsViewer({ projectId }: Props) {
     );
   }
 
-  return (
-    <div className="h-full overflow-y-auto scrollbar-thin">
-      <div className="p-6 max-w-4xl mx-auto">
-        <div
-          className="markdown-body"
-          dangerouslySetInnerHTML={{ __html: data.html }}
-        />
-      </div>
-    </div>
-  );
+  return <MarkdownDocumentView html={data.html} />;
 }
