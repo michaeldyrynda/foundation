@@ -6,8 +6,17 @@ export interface ParsedTask {
   dependencies: number[];
   title: string;
   description: string;
+  descriptionSections?: TaskDescriptionSections;
   html: string;
   filePath: string;
+}
+
+export interface TaskDescriptionSections {
+  role: string;
+  goal: string;
+  entryPoint: string;
+  productSurface: string;
+  completionState: string;
 }
 
 export interface ProjectSnapshot {

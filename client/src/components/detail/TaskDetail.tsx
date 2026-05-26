@@ -8,6 +8,46 @@ interface Props {
   onClose: () => void;
 }
 
+const DETAIL_SECTIONS = [
+  ["Goal", "goal"],
+  ["Entry point", "entryPoint"],
+  ["Product surface", "productSurface"],
+  ["Completion state", "completionState"],
+] as const;
+
+function TaskFraming({ task }: { task: Task }) {
+  const sections = task.descriptionSections;
+  if (!sections) return null;
+
+  return (
+    <section className="mb-6 overflow-hidden rounded-lg border border-zinc-700/60 bg-surface-2/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_16px_40px_rgba(0,0,0,0.22)] ring-1 ring-white/[0.03]">
+      <div className="border-b border-white/5 bg-zinc-800/20 px-4 py-3">
+        <div className="flex items-center justify-between gap-3">
+          <p className="py-0.5 text-xs uppercase tracking-[0.22em] text-zinc-500">
+            Task framing
+          </p>
+          <span className="shrink-0 rounded border border-zinc-500/30 bg-zinc-700/25 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-400">
+            {sections.role}
+          </span>
+        </div>
+      </div>
+
+      <div className="divide-y divide-white/5">
+        {DETAIL_SECTIONS.map(([label, key]) => (
+          <div key={key} className="px-4 py-3.5">
+            <h3 className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
+              {label}
+            </h3>
+            <p className="text-sm leading-relaxed text-zinc-200">
+              {sections[key]}
+            </p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export function TaskDetail({ task, allTasks, onClose }: Props) {
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -140,6 +180,7 @@ export function TaskDetail({ task, allTasks, onClose }: Props) {
           )}
 
           <div className="border-t border-border pt-5">
+            <TaskFraming task={task} />
             <div
               className="markdown-body"
               dangerouslySetInnerHTML={{ __html: task.html }}

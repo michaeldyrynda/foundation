@@ -3,7 +3,7 @@ import { Marked, marked as markedPlain } from "marked";
 import { markedHighlight } from "marked-highlight";
 import hljs from "highlight.js";
 import { readFileSync } from "fs";
-import type { TaskStatus, ParsedTask } from "../types";
+import type { TaskStatus, ParsedTask, TaskDescriptionSections } from "../types";
 
 const markedHighlighted = new Marked(
   markedHighlight({
@@ -31,15 +31,45 @@ function normalizeStatus(raw: string): TaskStatus {
   return raw as TaskStatus;
 }
 
+function capitalizeFirst(value: string): string {
+  const trimmed = value.trim();
+  return trimmed ? trimmed[0]!.toUpperCase() + trimmed.slice(1) : trimmed;
+}
+
+const structuredDescriptionPattern = /^Description:\s*\n- Role:\s*(.+)\n- Goal:\s*(.+)\n- Entry point:\s*(.+)\n- Product surface:\s*(.+)\n- Completion state:\s*(.+)$/m;
+
+function parseDescriptionSections(body: string): {
+  sections?: TaskDescriptionSections;
+  content: string;
+} {
+  const match = body.match(structuredDescriptionPattern);
+  if (!match) return { content: body };
+
+  const [block, role, goal, entryPoint, productSurface, completionState] = match;
+
+  return {
+    sections: {
+      role: role!.trim(),
+      goal: capitalizeFirst(goal!),
+      entryPoint: capitalizeFirst(entryPoint!),
+      productSurface: capitalizeFirst(productSurface!),
+      completionState: capitalizeFirst(completionState!),
+    },
+    content: body.replace(block, ""),
+  };
+}
+
 export function parseTaskContent(
   filePath: string,
   content: string
 ): ParsedTask {
   const { data, content: body } = matter(content);
   const titleMatch = body.match(/^Title:\s*(.+)$/m);
+  const bodyWithoutTitle = body.replace(/^Title:\s*.+$/m, "");
+  const { sections: descriptionSections, content: bodyWithoutStructuredDescription } =
+    parseDescriptionSections(bodyWithoutTitle);
 
-  const cleaned = body
-    .replace(/^Title:\s*.+$/m, "")
+  const cleaned = bodyWithoutStructuredDescription
     .replace(/^Description:\s*$/m, "## Description")
     .replace(/^Acceptance Criteria:\s*$/m, "## Acceptance Criteria")
     .replace(/^\n+/, "");
@@ -50,6 +80,7 @@ export function parseTaskContent(
     dependencies: data.dependencies ?? [],
     title: titleMatch?.[1]?.trim() ?? `Task ${data.number}`,
     description: cleaned,
+    descriptionSections,
     html: renderMarkdown(cleaned),
     filePath,
   };
