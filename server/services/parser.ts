@@ -83,6 +83,8 @@ export function parseTaskContent(
     descriptionSections,
     html: renderMarkdown(cleaned),
     filePath,
+    soloTodoId: data.solo_todo_id ?? null,
+    soloUrl: data.solo_slug ?? null,
   };
 }
 
@@ -96,8 +98,15 @@ export function parseMarkdownFile(filePath: string): {
   html: string;
 } {
   const content = readFileSync(filePath, "utf-8");
+  const { content: body } = matter(content);
   return {
-    content,
-    html: renderMarkdown(content),
+    content: body,
+    html: renderMarkdown(body),
   };
+}
+
+export function parseSpecFrontmatter(filePath: string): Record<string, unknown> {
+  const content = readFileSync(filePath, "utf-8");
+  const { data } = matter(content);
+  return data;
 }

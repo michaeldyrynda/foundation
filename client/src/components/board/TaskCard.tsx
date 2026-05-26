@@ -69,27 +69,52 @@ export const TaskCard = memo(function TaskCard({
         <p className="text-sm text-zinc-200 mt-1.5 leading-snug line-clamp-2">
           {task.title}
         </p>
-        {task.dependencies.length > 0 && (
-          <div className="mt-2 flex items-center gap-1">
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 12 12"
-              fill="none"
-              className="text-zinc-600"
-            >
-              <path
-                d="M2 6h3l2-3 2 6 2-3h1"
-                stroke="currentColor"
-                strokeWidth="1"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            <span className="text-xs text-zinc-600 font-mono">
-              {task.dependencies.length} dep
-              {task.dependencies.length !== 1 ? "s" : ""}
-            </span>
+        {(task.dependencies.length > 0 || task.soloUrl) && (
+          <div className="mt-2 flex items-center gap-2">
+            {task.dependencies.length > 0 && (
+              <>
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 12 12"
+                  fill="none"
+                  className="text-zinc-600"
+                >
+                  <path
+                    d="M2 6h3l2-3 2 6 2-3h1"
+                    stroke="currentColor"
+                    strokeWidth="1"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                <span className="text-xs text-zinc-600 font-mono">
+                  {task.dependencies.length} dep
+                  {task.dependencies.length !== 1 ? "s" : ""}
+                </span>
+              </>
+            )}
+            {task.soloUrl && (
+              <a
+                href={task.soloUrl}
+                onClick={(e) => e.stopPropagation()}
+                className="inline-flex items-center gap-0.5 text-[10px] font-mono text-purple-400/70 hover:text-purple-300 transition-colors"
+              >
+                <svg
+                  width="9"
+                  height="9"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M10 13a5 5 0 000-10H5.5a3.5 3.5 0 100 7H10" />
+                </svg>
+                Solo
+              </a>
+            )}
           </div>
         )}
       </div>

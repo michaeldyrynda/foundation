@@ -1,6 +1,6 @@
 import { readdirSync, existsSync, statSync } from "fs";
 import { join } from "path";
-import { parseTaskFile } from "./parser";
+import { parseTaskFile, parseSpecFrontmatter } from "./parser";
 import type { ProjectSnapshot, ParsedTask } from "../types";
 
 interface CachedProject {
@@ -9,6 +9,7 @@ interface CachedProject {
   tasks: Map<number, ParsedTask>;
   planPath: string | null;
   learningsPath: string | null;
+  soloProjectId: number | null;
 }
 
 const cache = new Map<number, CachedProject>();
@@ -23,11 +24,16 @@ export function loadProject(projectId: number, aiPath: string, planFile?: string
 
   let planPath: string | null = null;
   let learningsPath: string | null = null;
+  let soloProjectId: number | null = null;
 
   if (activePlan) {
     const dir = planDir(aiPath, activePlan);
     const specPath = join(dir, "spec.md");
-    if (existsSync(specPath)) planPath = specPath;
+    if (existsSync(specPath)) {
+      planPath = specPath;
+      const fm = parseSpecFrontmatter(specPath);
+      soloProjectId = (fm.solo_project_id as number) ?? null;
+    }
 
     const lPath = join(dir, "learnings.md");
     if (existsSync(lPath)) learningsPath = lPath;
@@ -55,6 +61,7 @@ export function loadProject(projectId: number, aiPath: string, planFile?: string
     tasks,
     planPath,
     learningsPath,
+    soloProjectId,
   });
 }
 
@@ -67,6 +74,7 @@ export function getSnapshot(projectId: number): ProjectSnapshot | null {
     ),
     planPath: cached.planPath,
     learningsPath: cached.learningsPath,
+    soloProjectId: cached.soloProjectId,
   };
 }
 

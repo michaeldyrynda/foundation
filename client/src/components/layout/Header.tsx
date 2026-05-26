@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from "react";
-import { useProjectPlans, useUpdatePlanFile } from "../../api/hooks";
+import { useProjectPlans, useUpdatePlanFile, usePlan } from "../../api/hooks";
 import type { Project } from "../../types";
 
 export type ViewTab = "board" | "graph" | "plan" | "learnings" | "stats";
@@ -168,6 +168,30 @@ function PlanSwitcher({ project, onProjectUpdated }: { project: Project; onProje
   );
 }
 
+function SoloBadge({ projectId }: { projectId: number }) {
+  const { data } = usePlan(projectId);
+  if (!data?.soloProjectId) return null;
+
+  return (
+    <span className="inline-flex items-center gap-1 rounded-md bg-purple-500/10 px-2 py-0.5 text-[10px] font-mono font-medium uppercase tracking-wider text-purple-400 border border-purple-500/20">
+      <svg
+        width="10"
+        height="10"
+        viewBox="0 0 16 16"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="shrink-0"
+      >
+        <path d="M10 13a5 5 0 000-10H5.5a3.5 3.5 0 100 7H10" />
+      </svg>
+      Solo
+    </span>
+  );
+}
+
 export function Header({ project, activeTab, onTabChange, onProjectUpdated }: Props) {
   return (
     <header className="bg-surface-1 border-b border-border px-5 flex items-center justify-between h-14 shrink-0">
@@ -179,6 +203,7 @@ export function Header({ project, activeTab, onTabChange, onProjectUpdated }: Pr
           {project.path}
         </span>
         <PlanSwitcher project={project} onProjectUpdated={onProjectUpdated} />
+        <SoloBadge projectId={project.id} />
       </div>
 
       <nav className="flex items-center gap-1">

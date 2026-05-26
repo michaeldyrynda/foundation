@@ -9,6 +9,8 @@ export interface Task {
   descriptionSections?: TaskDescriptionSections;
   html: string;
   filePath: string;
+  soloTodoId: number | null;
+  soloUrl: string | null;
 }
 
 export interface TaskDescriptionSections {
@@ -40,4 +42,5 @@ export interface ProjectStats {
 export interface DocumentContent {
   content: string;
   html: string;
+  soloProjectId?: number | null;
 }

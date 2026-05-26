@@ -9,6 +9,8 @@ export interface ParsedTask {
   descriptionSections?: TaskDescriptionSections;
   html: string;
   filePath: string;
+  soloTodoId: number | null;
+  soloUrl: string | null;
 }
 
 export interface TaskDescriptionSections {
@@ -23,6 +25,7 @@ export interface ProjectSnapshot {
   tasks: ParsedTask[];
   planPath: string | null;
   learningsPath: string | null;
+  soloProjectId: number | null;
 }
 
 export interface ProjectStats {

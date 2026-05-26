@@ -20,7 +20,7 @@ app.get("/:id/plan", (c) => {
   if (!snapshot?.planPath) return c.json({ error: "No plan file found" }, 404);
 
   const doc = parseMarkdownFile(snapshot.planPath);
-  return c.json(doc);
+  return c.json({ ...doc, soloProjectId: snapshot.soloProjectId });
 });
 
 app.get("/:id/learnings", (c) => {
