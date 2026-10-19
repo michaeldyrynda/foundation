@@ -111,7 +111,8 @@ body {
 
   h1,
   h2,
-  h3 {
+  h3,
+  h4 {
     @apply text-zinc-100 font-semibold mt-6 mb-3 scroll-mt-6;
   }
   h1 {
@@ -122,6 +123,9 @@ body {
   }
   h3 {
     @apply text-lg;
+  }
+  h4 {
+    @apply text-base;
   }
 
   p {

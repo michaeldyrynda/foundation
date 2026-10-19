@@ -26,7 +26,7 @@ function buildDocument(html: string): { anchoredHtml: string; tocItems: TocItem[
 
   const seen = new Map<string, number>();
   const headings = Array.from(
-    container.querySelectorAll<HTMLHeadingElement>("h2, h3")
+    container.querySelectorAll<HTMLHeadingElement>("h2, h3, h4")
   );
 
   const tocItems = headings.flatMap((heading) => {
@@ -160,11 +160,11 @@ export function MarkdownDocumentView({ html }: Props) {
                     type="button"
                     onClick={() => handleTocClick(item.id)}
                     className={`relative block w-full rounded-r-md py-1.5 pr-3 text-left text-xs leading-snug transition-colors before:absolute before:bottom-1 before:left-0 before:top-1 before:w-px before:rounded-full ${
-                      item.level === 3
-                        ? "pl-8"
-                        : item.level === 2
-                          ? "pl-5"
-                          : "pl-3"
+                      item.level >= 4
+                        ? "pl-11"
+                        : item.level === 3
+                          ? "pl-8"
+                          : "pl-5"
                     } ${
                       active
                         ? "bg-surface-2/60 text-zinc-100 before:bg-blue-400"
